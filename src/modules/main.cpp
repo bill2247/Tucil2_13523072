@@ -13,14 +13,30 @@ int main(int argc, char* argv[]) {
     }
     
     try {
-        // Parse input parameters
-        std::string inputPath = argv[1];
-        int methodNum = std::stoi(argv[2]);
-        double threshold = std::stod(argv[3]);
-        int minBlockSize = std::stoi(argv[4]);
-        double compressionPercentage = std::stod(argv[5]);
-        std::string outputPath = argv[6];
-        std::string gifPath = (argc > 7) ? argv[7] : "";
+        std::string inputPath;
+        std::cout << "input path: ";
+        std::cin >> inputPath;
+
+        int methodNum;
+        std::cout << "error method" << std::endl;
+        std::cout << "1. Variance " << std::endl;
+        std::cout << "2. Mean Absolute Deviation " << std::endl;
+        std::cout << "3. Max Pixel Difference " << std::endl;
+        std::cout << "4. Entropy " << std::endl;
+        std::cout << "Enter method number (1-4): ";
+        std::cin >> methodNum;
+
+        double threshold;
+        std::cout << "input treshold (0.0-1.0): ";
+        std::cin >> threshold;
+
+        int minBlockSize;
+        std::cout << "input minimum block size: ";
+        std::cin >> minBlockSize;
+
+        std::string outputPath;
+        std::cout << "output path: ";
+        std::cin >> outputPath;
         
         // Convert method number to enum
         ErrorCalculator::ErrorMethod method;
@@ -29,7 +45,6 @@ int main(int argc, char* argv[]) {
             case 2: method = ErrorCalculator::MEAN_ABSOLUTE_DEVIATION; break;
             case 3: method = ErrorCalculator::MAX_PIXEL_DIFFERENCE; break;
             case 4: method = ErrorCalculator::ENTROPY; break;
-            case 5: method = ErrorCalculator::SSIM; break;
             default: throw std::invalid_argument("Invalid error method");
         }
         

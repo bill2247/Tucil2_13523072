@@ -1,39 +1,35 @@
-# Makefile for Quadtree Image Compressor
-
-# Compiler settings
+# Makefile
 CXX := g++
-CXXFLAGS := -std=c++14 -Wall -Wextra -O3 -I./src/header -Wno-missing-field-initializers
+CXXFLAGS := -std=c++17 -Wall -Wextra -O3 -I./src/header -Wno-missing-field-initializers
 
-# Directories
 SRC_DIR := src/modules
 HEADER_DIR := src/header
 BIN_DIR := bin
 TEST_DIR := test
 
-# Source files
-SOURCES := $(SRC_DIR)/ErrorCalculator.cpp \
-           $(SRC_DIR)/ImagePixel.cpp \
-           $(SRC_DIR)/QuadTreeNode.cpp \
-           $(SRC_DIR)/main.cpp \
-           $(SRC_DIR)/stb_implementation.cpp
+# List all source files except stb_implementation.cpp for regular compilation
+MAIN_SOURCES := $(SRC_DIR)/ErrorCalculator.cpp \
+                $(SRC_DIR)/ImagePixel.cpp \
+                $(SRC_DIR)/QuadTreeNode.cpp \
+                $(SRC_DIR)/main.cpp
 
-OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%.o,$(SOURCES))
+OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%.o,$(MAIN_SOURCES))
+STB_OBJECT := $(BIN_DIR)/stb_implementation.o
 EXECUTABLE := $(BIN_DIR)/quadtree_compressor
 
-# Main target
 all: $(EXECUTABLE)
 
-# Link all object files
-$(EXECUTABLE): $(OBJECTS)
-	@mkdir -p $(@D)
+$(EXECUTABLE): $(OBJECTS) $(STB_OBJECT)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-# Compile each source file to object file
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean build artifacts
+$(STB_OBJECT): $(SRC_DIR)/stb_implementation.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 clean:
 	rm -rf $(BIN_DIR)/*.o $(EXECUTABLE)
 

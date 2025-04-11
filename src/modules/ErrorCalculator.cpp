@@ -8,7 +8,6 @@ double ErrorCalculator::calculateError(ErrorMethod method,
         case MEAN_ABSOLUTE_DEVIATION: return calculateMAD(block, rValue, gValue, bValue);
         case MAX_PIXEL_DIFFERENCE: return calculateMaxDiff(block, rValue, gValue, bValue);
         case ENTROPY: return calculateEntropy(block, rValue, gValue, bValue);
-        case SSIM: return calculateSSIM(block, rValue, gValue, bValue);
         default: throw std::invalid_argument("Invalid error method");
     }
 }
@@ -17,6 +16,7 @@ double ErrorCalculator::calculateVariance(const std::vector<std::vector<Pixel>>&
                               double& rMean, double& gMean, double& bMean) {
     calculateMeans(block, rMean, gMean, bMean);
     
+    double maxVariance = 16256.25;
     double rVar = 0, gVar = 0, bVar = 0;
     int count = 0;
     
@@ -33,13 +33,14 @@ double ErrorCalculator::calculateVariance(const std::vector<std::vector<Pixel>>&
     gVar /= count;
     bVar /= count;
     
-    return (rVar + gVar + bVar) / 3.0;
+    return (rVar + gVar + bVar) / (3.0 * maxVariance);
 }
 
 double ErrorCalculator::calculateMAD(const std::vector<std::vector<Pixel>>& block,
                          double& rMean, double& gMean, double& bMean) {
     calculateMeans(block, rMean, gMean, bMean);
     
+    double maxMAD = 127.5;
     double rMad = 0, gMad = 0, bMad = 0;
     int count = 0;
     
@@ -56,11 +57,12 @@ double ErrorCalculator::calculateMAD(const std::vector<std::vector<Pixel>>& bloc
     gMad /= count;
     bMad /= count;
     
-    return (rMad + gMad + bMad) / 3.0;
+    return (rMad + gMad + bMad) / (3.0 * maxMAD);
 }
 
 double ErrorCalculator::calculateMaxDiff(const std::vector<std::vector<Pixel>>& block,
                              double& rMean, double& gMean, double& bMean) {
+    const double diffMax = 255.0;
     if (block.empty() || block[0].empty()) return 0.0;
     
     uint8_t rMin = block[0][0].r, rMax = block[0][0].r;
@@ -86,7 +88,7 @@ double ErrorCalculator::calculateMaxDiff(const std::vector<std::vector<Pixel>>& 
     double gDiff = gMax - gMin;
     double bDiff = bMax - bMin;
     
-    return (rDiff + gDiff + bDiff) / 3.0;
+    return (rDiff + gDiff + bDiff) / (3.0 * diffMax);
 }
 
 double ErrorCalculator::calculateEntropy(const std::vector<std::vector<Pixel>>& block, double& rMean, double& gMean, double& bMean) {
@@ -95,6 +97,7 @@ double ErrorCalculator::calculateEntropy(const std::vector<std::vector<Pixel>>& 
     std::map<uint8_t, int> rHist, gHist, bHist;
     calculateHistograms(block, rHist, gHist, bHist);
     
+    double maxEntropy = 8.0;
     int totalPixels = block.size() * block[0].size();
     double rEntropy = 0, gEntropy = 0, bEntropy = 0;
     
@@ -113,42 +116,7 @@ double ErrorCalculator::calculateEntropy(const std::vector<std::vector<Pixel>>& 
         bEntropy -= prob * log2(prob);
     }
     
-    return (rEntropy + gEntropy + bEntropy) / 3.0;
-}
-
-double ErrorCalculator::calculateSSIM(const std::vector<std::vector<Pixel>>& block, double& rMean, double& gMean, double& bMean) {
-    // Simplified SSIM implementation (full SSIM would need reference image)
-    calculateMeans(block, rMean, gMean, bMean);
-    
-    double rVar = 0, gVar = 0, bVar = 0;
-    int count = 0;
-    
-    for (const auto& row : block) {
-        for (const Pixel& p : row) {
-            rVar += (p.r - rMean) * (p.r - rMean);
-            gVar += (p.g - gMean) * (p.g - gMean);
-            bVar += (p.b - bMean) * (p.b - bMean);
-            count++;
-        }
-    }
-    
-    rVar /= count;
-    gVar /= count;
-    bVar /= count;
-    
-    // Constants for SSIM
-    const double C1 = (0.01 * 255) * (0.01 * 255);
-    const double C2 = (0.03 * 255) * (0.03 * 255);
-    
-    // Simplified SSIM (assuming perfect structure and no reference)
-    double rSSIM = (2 * rMean * rMean + C1) * (2 * rVar + C2) / 
-                  ((rMean * rMean + rMean * rMean + C1) * (rVar + rVar + C2));
-    double gSSIM = (2 * gMean * gMean + C1) * (2 * gVar + C2) / 
-                  ((gMean * gMean + gMean * gMean + C1) * (gVar + gVar + C2));
-    double bSSIM = (2 * bMean * bMean + C1) * (2 * bVar + C2) / 
-                  ((bMean * bMean + bMean * bMean + C1) * (bVar + bVar + C2));
-    
-    return (rSSIM + gSSIM + bSSIM) / 3.0;
+    return (rEntropy + gEntropy + bEntropy) / (3.0 * maxEntropy);
 }
 
 void ErrorCalculator::calculateMeans(const std::vector<std::vector<Pixel>>& block, double& rMean, double& gMean, double& bMean) {
